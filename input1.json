@@ -1,0 +1,14 @@
+{"Users": { "Person": [
+  {"id": 1, "name": "Alice", "Friendship":
+  {"Friend":[{"fid": 2, "years": 3}, {"fid": 4, "years": 4}]}
+  },
+  {"id": 2, "name": "Bob", "Friendship":
+  {"Friend":[{"fid": 3, "years": 2}, {"fid": 1, "years": 3}]}
+  },
+  {"id": 3, "name": "Clair", "Friendship":
+  {"Friend":[{"fid": 2, "years": 2}]}
+  },
+  {"id": 4, "name": "David", "Friendship":
+  {"Friend":[{"fid": 1, "years": 4}]}
+  }
+]}}

@@ -1,10 +1,13 @@
 #! /usr/bin/python
 
+from subprocess import call
 import hashlib
 import json
 import copy
 import csv
+import argparse
 import itertools
+import os
 from pprint import pprint
 from collections import namedtuple
 
@@ -145,21 +148,34 @@ def create_csv_file(column_names, table, file_name):
     for i in range(0, len(table)):
         for j in range(0, len(column_names)):
             f.write(str(table[i][j]))
-            f.write(",")
+            if j < len(column_names) - 1:
+                f.write(",")
         f.write("\n")
 
 
 def main():
+    # Parsing arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-json", type=str, default='input.json', help="The path of the example json file input")
+    parser.add_argument("-csv", type=str, default='table.csv', help="The path of the example CSV table file input")
+    parser.add_argument("-gv", "--graphviz", type=str, help="The path of the generated graphviz file based on the"
+                                                           " constructed Hierarchical Data Structure (HDS)")
+    parser.add_argument("-s", "--showgraph", action="store_true", default=False,
+                        help="A flag to show the produced GraphViz file")
+    parser.add_argument("-q", "--quiet", action="store_true", default=False,
+                        help="A flag to hide the DSL output")
+    parser.add_argument("-o", type=str, help="The path of the overestimated table dump")
+    args = parser.parse_args()
+
     # JSON - parsing input example
-    json_file = 'input1.json'
-    json_data = open(json_file)
+    json_data = open(args.json)
     data = json.load(json_data)
     json_data.close()
 
     # CSV - parsing output example
     column_names = []
     columns = []
-    csv_file = open('table1.csv')
+    csv_file = open(args.csv)
     csv_data = csv.reader(csv_file)
     first = True
     for row in csv_data:
@@ -173,12 +189,16 @@ def main():
                 if row[i].isdigit():
                     row[i] = int(row[i])
                 columns[i].append(row[i])
-
+    
     root = Node(data.keys()[0])
     createDHT(root, data[data.keys()[0]])
-    create_graph_viz(root, "dude.gv")
+    if args.graphviz is not None:
+        create_graph_viz(root, args.graphviz)
+        if args.showgraph:
+            call(["dot", "-Tsvg", args.graphviz, "-o", "graph_tmp.svg"])
+            call(["firefox", "graph_tmp.svg"])
 
-    # create the finite deterministic machine
+    # create the finite deterministic state machine
     s = set()
     s.add(root)
     m = {frozenset(s): (set(), [])}
@@ -197,14 +217,16 @@ def main():
         k = 1
         for data, path in m.values():
             if set(col) <= data:
-                print "p" + str(i) + str(k) + " = " + dsl_function_string(path)
+                if not args.quiet:
+                    print "p" + str(i) + str(k) + " = " + dsl_function_string(path)
                 if k == 1:
                     cartesian_material.append(data)
                 k += 1
 
     table = create_cartesian_product(cartesian_material)
     # dump the overestimated csv
-    create_csv_file(column_names, table, "overestimated_table.csv")
+    if args.o is not None:
+        create_csv_file(column_names, table, args.o)
 
 
 if __name__ == "__main__":
